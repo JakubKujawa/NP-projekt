@@ -31,7 +31,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: c0d3player/np-projekt:1.0
+          tags: c0d3player/np-projekt:latest
           
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
