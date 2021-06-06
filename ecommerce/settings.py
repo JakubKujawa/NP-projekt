@@ -6,7 +6,8 @@ DEBUG = True
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '-05sgp9!deq=q1nltm@^^2cc+v29i(tyybv3v2t77qi66czazj'
 ALLOWED_HOSTS = ['0.0.0.0', '127.0.0.1', 'localhost']
-STRIPE_SECRET_KEY = 'sk_test_4eC39HqLyjWDarjtT1zdp7dc'
+STRIPE_SECRET_KEY = 'sk_test_51IzNWGCMEjnGKS02FsT2C0FEihBaEEUfyE0RYt8o5tvKNECiF4VYmAUcqCRdcZ0JCB6BweWeF6TtOtKRL92Ai4gd00cqrFJkw1'
+STRIPE_PUBLIC_KEY = 'pk_test_51IzNWGCMEjnGKS02yWIOOQXiWOwKsNyg87kBN7GOZ5N3dMBR6EXwM7XjRxFK6Jhk0n4LLWdZvvCrs0px4l6Bl2rd00RxgAWOXX'
 
 INSTALLED_APPS = [
     'django.contrib.admin',
