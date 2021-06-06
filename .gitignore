@@ -1,12 +1,6 @@
-# Adios
 **/*.pyc
 **/__pycache__
+media_root
+static_root
 env
-media
-.DS_Store
-bin
 /.vscode
-
-# Akceptuj te pliki w repozytorium
-!.gitignore
-!.travis.yml

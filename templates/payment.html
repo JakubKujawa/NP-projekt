@@ -158,7 +158,7 @@ button:hover {
 
           </div>
         </div>
-
+        {% include "order_snippet.html" %}
       </div>
 
     </div>
@@ -170,7 +170,7 @@ button:hover {
 
 <script src="https://js.stripe.com/v3/"></script>
 <script nonce="">  // Create a Stripe client.
-  var stripe = Stripe('{{STRIPE_PUBLIC_KEY}}');
+  var stripe = Stripe('{{STRIPE_SECRET_KEY}}');
 
   // Create an instance of Elements.
   var elements = stripe.elements();

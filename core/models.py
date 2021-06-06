@@ -1,3 +1,4 @@
+from re import T
 from django.conf import settings
 from django.db import models
 from django.shortcuts import reverse
@@ -25,6 +26,7 @@ class Item(models.Model):
     label = models.CharField(choices=LABEL_CHOICES, max_length=1)
     slug = models.SlugField()
     description = models.TextField()
+    image = models.ImageField()
 
     def __str__(self):
         return self.title
@@ -81,6 +83,8 @@ class Order(models.Model):
         'BillingAdress', on_delete=models.SET_NULL, blank=True, null=True)
     payment = models.ForeignKey(
         'Payment', on_delete=models.SET_NULL, blank=True, null=True)
+    coupon = models.ForeignKey(
+        'Coupon', on_delete=models.SET_NULL, blank=True, null=True)
 
     def __str__(self):
         return self.user.username
@@ -89,6 +93,8 @@ class Order(models.Model):
         total = 0
         for order_item in self.items.all():
             total += order_item.get_final_price()
+        if self.coupon:
+            total -= self.coupon.amount
         return total
 
 
@@ -103,13 +109,22 @@ class BillingAdress(models.Model):
     def __str__(self):
         return self.user.username
 
+
 class Payment(models.Model):
     stripe_charge_id = models.CharField(max_length=50)
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
-                             on_delete=models.SET_NULL, 
+                             on_delete=models.SET_NULL,
                              blank=True, null=True)
     amount = models.FloatField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.user.username
+
+
+class Coupon(models.Model):
+    code = models.CharField(max_length=15)
+    amount = models.FloatField()
+
+    def __str__(self):
+        return self.code
