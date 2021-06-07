@@ -1,5 +1,4 @@
 import random
-from re import T
 import string
 
 import stripe
@@ -8,14 +7,13 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import request
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.generic import DetailView, ListView, View
 
-from .forms import CheckoutForm, CouponForm, RefundForm
-from .models import (Adress, Coupon, Item, Order, OrderItem, Payment,
-                     Refund)
+from .forms import CheckoutForm, CouponForm, PaymentForm, RefundForm
+from .models import (Adress, Coupon, Item, Order, OrderItem, Payment, Refund,
+                     UserProfile)
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -216,6 +214,18 @@ class PaymentView(View):
                 'DISPLAY_COUPON_FORM': False,
                 'STRIPE_PUBLIC_KEY': settings.STRIPE_PUBLIC_KEY
             }
+            userprofile = self.request.user.userprofile
+            if userprofile.one_click_purchasing:
+                cards = stripe.Customer.list_sources(
+                    userprofile.stripe_customer_id,
+                    limit=3,
+                    object='card'
+                )
+                card_list = cards['data']
+                if len(card_list) > 0:
+                    context.update({
+                        'card': card_list[0]
+                    })
             return render(self.request, "payment.html", context)
         else:
             messages.warning(
@@ -224,24 +234,49 @@ class PaymentView(View):
 
     def post(self, *args, **kwargs):
         order = Order.objects.get(user=self.request.user, ordered=False)
-        token = self.request.POST.get('stripeToken')
-        amount = int(order.get_total()) * 100
+        form = PaymentForm(self.request.POST)
+        userprofile = UserProfile.objects.get(user=self.request.user)
+        if form.is_valid():
+            token = form.cleaned_data.get('stripeToken')
+            save = form.cleaned_data.get('save')
+            use_default = form.cleaned_data.get('use_default')
+
+            if save:
+                if userprofile.stripe_customer_id != '' and userprofile.stripe_customer_id is not None:
+                    customer = stripe.Customer.retrieve(
+                        userprofile.stripe_customer_id)
+                    customer.sources.create(source=token)
+
+                else:
+                    customer = stripe.Customer.create(
+                        email=self.request.user.email,
+                    )
+                    customer.sources.create(source=token)
+                    userprofile.stripe_customer_id = customer['id']
+                    userprofile.one_click_purchasing = True
+                    userprofile.save()
+
+            amount = int(order.get_total() * 100)
 
         try:
-            charge = stripe.Charge.create(
-                amount=amount,  # Cents
-                currency="usd",
-                source=token
-            )
+            if use_default or save:
+                charge = stripe.Charge.create(
+                    amount=amount,  # cents
+                    currency="usd",
+                    customer=userprofile.stripe_customer_id
+                )
+            else:
+                charge = stripe.Charge.create(
+                    amount=amount,  # cents
+                    currency="usd",
+                    source=token
+                )
 
-            # Create the payment
             payment = Payment()
             payment.stripe_charge_id = charge['id']
             payment.user = self.request.user
             payment.amount = order.get_total()
             payment.save()
-
-            # assign the payment to the order
 
             order_items = order.items.all()
             order_items.update(ordered=True)
@@ -287,8 +322,6 @@ class PaymentView(View):
             messages.warning(
                 self.request, "A serious error occured. We have been notified")
             return redirect("/")
-
-        order.ordered = True
 
 
 class HomeView(ListView):
