@@ -471,6 +471,8 @@ class AddCouponView(View):
                 order.save()
                 messages.success(self.request, "Successfully added coupon")
                 return redirect("core:checkout")
+            except ValueError:
+                return redirect("core:checkout")
             except ObjectDoesNotExist:
                 messages.info(self.request, "You do not have an active order")
                 return redirect("core:checkout")
