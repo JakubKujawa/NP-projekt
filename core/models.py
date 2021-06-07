@@ -22,7 +22,6 @@ ADRESS_CHOICES = (
 )
 
 
-
 class UserProfile(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -31,6 +30,7 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return self.user.username
+
 
 class Item(models.Model):
     title = models.CharField(max_length=100)
@@ -106,15 +106,6 @@ class Order(models.Model):
     received = models.BooleanField(default=False)
     refund_requested = models.BooleanField(default=False)
     refund_granted = models.BooleanField(default=False)
-
-    '''
-    1. Item added to cart
-    2. Adding a billing address
-    3. Payment
-    4. Being delivered
-    5. Received
-    6. Refunds
-    '''
 
     def __str__(self):
         return self.user.username

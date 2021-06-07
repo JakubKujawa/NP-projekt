@@ -445,6 +445,20 @@ def get_coupon(request, code):
         return redirect("core:checkout")
 
 
+class RemoveCouponView(View):
+    def post(self, *args, **kwargs):
+        try:
+            order = Order.objects.get(
+                user=self.request.user, ordered=False)
+            order.coupon = None
+            order.save()
+            messages.success(self.request, "Successfully removed coupon")
+            return redirect("core:checkout")
+        except ObjectDoesNotExist:
+            messages.info(self.request, "You do not have an active order")
+            return redirect("core:checkout")
+
+
 class AddCouponView(View):
     def post(self, *args, **kwargs):
         form = CouponForm(self.request.POST or None)
@@ -452,16 +466,13 @@ class AddCouponView(View):
             try:
                 code = form.cleaned_data.get('code')
                 order = Order.objects.get(
-                    user=self.request.user,
-                    ordered=False
-                )
+                    user=self.request.user, ordered=False)
                 order.coupon = get_coupon(self.request, code)
                 order.save()
                 messages.success(self.request, "Successfully added coupon")
                 return redirect("core:checkout")
-
             except ObjectDoesNotExist:
-                messages.info(self.request, "This item was not in your cart")
+                messages.info(self.request, "You do not have an active order")
                 return redirect("core:checkout")
 
 
