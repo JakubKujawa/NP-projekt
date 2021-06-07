@@ -194,8 +194,24 @@ class CheckoutView(View):
 
                 if payment_options == "S":
                     return redirect('core:payment', payment_options='stripe')
-                elif payment_options == "P":
-                    return redirect('core:payment', payment_options='paypal')
+                elif payment_options == "C":
+                    payment = Payment()
+                    payment.user = self.request.user
+                    payment.amount = order.get_total()
+                    payment.save()
+
+                    order_items = order.items.all()
+                    order_items.update(ordered=True)
+                    for item in order_items:
+                        item.save()
+
+                    order.ordered = True
+                    order.payment = payment
+                    order.ref_code = create_ref_code()
+                    order.save()
+
+                    messages.success(self.request, "Your order was successful!")
+                    return redirect("/")
                 else:
                     messages.warning(
                         self.request, "Invalid payment option selected")
